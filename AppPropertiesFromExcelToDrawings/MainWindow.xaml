@@ -21,6 +21,27 @@
                 Click="openExelButton_Click" Grid.Column="1"
                 >Открыть файл</Button>
 
+        <Button x:Name="openDrawingsButton" 
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                MinWidth="150"
+                MinHeight="50"
+                Margin="300,0,0,0"
+                Click="openDrawingsButton_Click" Grid.Column="1"
+                Content="Открыть чертежи"
+                ></Button>
+
+
+        <Button x:Name="updateDrawingsButton" 
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                MinWidth="150"
+                MinHeight="50"
+                Margin="100,0,0,0"
+                Click="updateDrawingsButton_Click" Grid.Column="1"
+                Content="Обновить чертежи"
+                ></Button>
+
 
     </Grid>
 </Window>

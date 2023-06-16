@@ -9,7 +9,7 @@ namespace AppPropertiesFromExcelToDrawings
     public class WorkDockRow
     {
         public int? Key { get; private set; }
-        public int? Id { get; private set; }
+        public string Id { get; private set; }
         public string KitCode { get; private set; } = "";
         public string KitName { get; private set; } = "";
         public string Date { get; private set; }
@@ -25,7 +25,7 @@ namespace AppPropertiesFromExcelToDrawings
 
             Key = rowIndex;
 
-            Id = Convert.ToInt32(row.GetValue(0, 0));
+            Id = row.GetValue(0, 0).ToString();
 
             KitCode = row.GetValue(0, 1).ToString();
 

@@ -6,7 +6,10 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using System.Windows.Media;
+using Tekla.Structures.Drawing;
 using Tekla.Structures.Model;
+using Drawing = Tekla.Structures.Drawing.Drawing;
 
 namespace AppPropertiesFromExcelToDrawings
 {
@@ -17,17 +20,25 @@ namespace AppPropertiesFromExcelToDrawings
     {
         private Model _model;
         private List<WorkDockRow> _workDockRows;
+        private DrawingHandler _CurrentDrawingHandler;
+        private List<Drawing> _drawings;
 
         public string FilePath { get; set; } = "";
 
 
         public Model Model { get => _model; set => _model = value; }
+        public DrawingHandler CurrentDrawingHandler
+        {
+            get { return this._CurrentDrawingHandler; }
+            set { this._CurrentDrawingHandler = value; }
+        }
 
-
+        public List<Drawing> Drawings { get => _drawings; set => _drawings = value; }
 
         public MainWindow()
         {
-            _model = new Model();
+            Model = new Model();
+            CurrentDrawingHandler = new DrawingHandler();
             InitializeComponent();
         }
 
@@ -62,6 +73,10 @@ namespace AppPropertiesFromExcelToDrawings
         #endregion
 
 
+        private void openExelButton_Click(object sender, RoutedEventArgs e)
+        {
+            GetDataFromExcel();
+        }
         private string GetFilesNamesInFolder()
         {
             DirectoryInfo dir = new DirectoryInfo(_model.GetInfo().ModelPath); //Assuming Test is your Folder
@@ -83,8 +98,7 @@ namespace AppPropertiesFromExcelToDrawings
             }
             return path;
         }
-
-        private void openExelButton_Click(object sender, RoutedEventArgs e)
+        private void GetDataFromExcel()
         {
             string pathToFile = GetFilesNamesInFolder();
 
@@ -103,10 +117,7 @@ namespace AppPropertiesFromExcelToDrawings
                 var sheet = package.Workbook.Worksheets[0];
                 _workDockRows = GetList(sheet);
             }
-
-
         }
-
         private List<WorkDockRow> GetList(ExcelWorksheet sheet)
         {
             int startRow = 2;
@@ -125,5 +136,54 @@ namespace AppPropertiesFromExcelToDrawings
 
             return list;
         }
+
+
+
+        private void openDrawingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            GetDrawingsFromTekla();
+        }
+        private void GetDrawingsFromTekla()
+        {
+            DrawingEnumerator drawingsEnum = CurrentDrawingHandler.GetDrawings();
+
+            if (drawingsEnum != null)
+            {
+                Drawings = new List<Drawing>();
+
+                foreach (Drawing Drawing in drawingsEnum)
+                {
+                    Drawings.Add(Drawing);
+                }
+
+                foreach (Drawing drawing in Drawings)
+                {
+                    string dateDeveloped = "";
+                    drawing.GetUserProperty("DR_ASSIGNED_TO", ref dateDeveloped);
+
+
+                    //CurrentDrawingHandler.UpdateDrawing(drawing);
+                }
+            }
+        }
+
+        private void updateDrawingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            ValidateExcelData();
+        }
+
+        private List<WorkDockRow> ValidateExcelData()
+        {
+
+            var validDataRows = (List<WorkDockRow>)Drawings.Where(d =>                                                
+                                                                        _workDockRows
+                                                                        .Where(w => w.IsValidName == true)
+                                                                        .Select(w=>w.Id)
+                                                                        .ToList()
+                                                                        .Contains(d.Title2));
+
+            return validDataRows;
+        }
+
     }
 }
