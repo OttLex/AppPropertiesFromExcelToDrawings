@@ -106,7 +106,6 @@ namespace AppPropertiesFromExcelToDrawings
                 return;
             }
 
-
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             using (ExcelPackage package = new ExcelPackage(FilePath))
             {
@@ -228,6 +227,7 @@ namespace AppPropertiesFromExcelToDrawings
                         sheet.Cells[rowIndex, sheet.Dimension.Columns].Value = "+";
                     }
                 }
+                
                 package.Save();
             }
         }
