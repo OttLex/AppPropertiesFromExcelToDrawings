@@ -22,17 +22,11 @@ namespace AppPropertiesFromExcelToDrawings
         private List<WorkDockRow> _workDockRows;
         private DrawingHandler _CurrentDrawingHandler;
         private List<Drawing> _drawings;
+        private string _filePath;
 
-        public string FilePath { get; set; } = "";
-
-
+        public string FilePath { get => _filePath; set => _filePath = value; }
         public Model Model { get => _model; set => _model = value; }
-        public DrawingHandler CurrentDrawingHandler
-        {
-            get { return this._CurrentDrawingHandler; }
-            set { this._CurrentDrawingHandler = value; }
-        }
-
+        public DrawingHandler CurrentDrawingHandler{ get=>_CurrentDrawingHandler; set=>_CurrentDrawingHandler = value; }
         public List<Drawing> Drawings { get => _drawings; set => _drawings = value; }
 
         public MainWindow()
@@ -40,6 +34,10 @@ namespace AppPropertiesFromExcelToDrawings
             Model = new Model();
             CurrentDrawingHandler = new DrawingHandler();
             InitializeComponent();
+
+            GetDataFromExcel();
+            GetDrawingsFromTekla();
+            UpdateDrawings();
         }
 
 
@@ -100,9 +98,9 @@ namespace AppPropertiesFromExcelToDrawings
         }
         private void GetDataFromExcel()
         {
-            string pathToFile = GetFilesNamesInFolder();
+            FilePath = GetFilesNamesInFolder();
 
-            if (pathToFile == "")
+            if (FilePath == "")
             {
                 MessageBox.Show("Ошибка. Файл \"Состав рабочей документации.xlsx\" не найден!");
                 return;
@@ -110,7 +108,7 @@ namespace AppPropertiesFromExcelToDrawings
 
 
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-            using (ExcelPackage package = new ExcelPackage(pathToFile))
+            using (ExcelPackage package = new ExcelPackage(FilePath))
             {
                 var sheet = package.Workbook.Worksheets[0];
                 _workDockRows = GetList(sheet);
@@ -156,12 +154,19 @@ namespace AppPropertiesFromExcelToDrawings
             }
         }
 
+
+
         private void updateDrawingsButton_Click(object sender, RoutedEventArgs e)
         {
-            List<Drawing> currentDrawings= GetDrawingsContainsExcelRow();
+            UpdateDrawings();
+        }
+
+        private void UpdateDrawings()
+        {
+            List<Drawing> currentDrawings = GetDrawingsContainsExcelRow();
 
             List<Drawing> updatedDrawings;
-            RewriteDrawingsData(currentDrawings,out updatedDrawings);
+            RewriteDrawingsData(currentDrawings, out updatedDrawings);
 
             UpdateDrawingsTekla(ref updatedDrawings);
         }
@@ -199,6 +204,31 @@ namespace AppPropertiesFromExcelToDrawings
             foreach (Drawing drawing in drawings)
             {
                 drawing.Modify();               
+            }
+            UpdateExcel();
+        }
+
+        private void UpdateExcel()
+        {
+            using (ExcelPackage package = new ExcelPackage(FilePath))
+            {
+                var sheet = package.Workbook.Worksheets[0];
+
+                int startRow = 2;
+                int startColumn = 1;
+
+                for (int rowIndex = startRow; rowIndex < sheet.Dimension.Rows + 1; rowIndex++)
+                {
+                    string id= sheet.GetValue(rowIndex, 1).ToString();
+                    WorkDockRow currentRow = _workDockRows.Where(r=> r.Id== id).First();
+
+                    if(currentRow != null)
+                    {
+                        sheet.Cells[rowIndex, sheet.Dimension.Columns].Clear();
+                        sheet.Cells[rowIndex, sheet.Dimension.Columns].Value = "+";
+                    }
+                }
+                package.Save();
             }
         }
 
