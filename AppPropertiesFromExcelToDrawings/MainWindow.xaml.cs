@@ -42,9 +42,9 @@ namespace AppPropertiesFromExcelToDrawings
             InitializeComponent();
         }
 
+
+
         #region На будующее открыть и сохранить файл через диалог.
-
-
         public bool OpenFileDialog()
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -109,8 +109,6 @@ namespace AppPropertiesFromExcelToDrawings
             }
 
 
-
-
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             using (ExcelPackage package = new ExcelPackage(pathToFile))
             {
@@ -155,34 +153,53 @@ namespace AppPropertiesFromExcelToDrawings
                 {
                     Drawings.Add(Drawing);
                 }
-
-                foreach (Drawing drawing in Drawings)
-                {
-                    string dateDeveloped = "";
-                    drawing.GetUserProperty("DR_ASSIGNED_TO", ref dateDeveloped);
-
-
-                    //CurrentDrawingHandler.UpdateDrawing(drawing);
-                }
             }
         }
 
         private void updateDrawingsButton_Click(object sender, RoutedEventArgs e)
         {
-            ValidateExcelData();
+            List<Drawing> currentDrawings= GetDrawingsContainsExcelRow();
+
+            List<Drawing> updatedDrawings;
+            RewriteDrawingsData(currentDrawings,out updatedDrawings);
+
+            UpdateDrawingsTekla(ref updatedDrawings);
         }
 
-        private List<WorkDockRow> ValidateExcelData()
+        private List<Drawing> GetDrawingsContainsExcelRow()
         {
 
-            var validDataRows = (List<WorkDockRow>)Drawings.Where(d =>                                                
-                                                                        _workDockRows
-                                                                        .Where(w => w.IsValidName == true)
-                                                                        .Select(w=>w.Id)
-                                                                        .ToList()
-                                                                        .Contains(d.Title2));
+            var validDataRows = Drawings.Where(d =>
+                                                    _workDockRows
+                                                    .Where(w => w.IsValidName == true)
+                                                    .Select(w => w.Id)
+                                                    .ToList()
+                                                    .Contains(d.Title2)).ToList();
 
             return validDataRows;
+        }
+
+        private void RewriteDrawingsData(List<Drawing> currentDrawings, out List<Drawing> updatedDrawings)
+        {
+            foreach(Drawing drawing in currentDrawings)
+            {
+                WorkDockRow curRow = _workDockRows.Where(r => r.Id == drawing.Title2).FirstOrDefault();
+
+                drawing.Title1 = curRow.KitCode;
+                drawing.Title2= curRow.KitName;
+                string dateDeveloped = curRow.Date;
+                drawing.SetUserProperty("DR_ASSIGNED_TO", dateDeveloped);
+            }
+
+            updatedDrawings = currentDrawings;
+        }
+
+        private void UpdateDrawingsTekla(ref List<Drawing> drawings)
+        {
+            foreach (Drawing drawing in drawings)
+            {
+                drawing.Modify();               
+            }
         }
 
     }

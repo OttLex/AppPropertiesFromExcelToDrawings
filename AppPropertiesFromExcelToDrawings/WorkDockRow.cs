@@ -15,7 +15,7 @@ namespace AppPropertiesFromExcelToDrawings
         public string Date { get; private set; }
         public bool? IsIssue { get; private set; }
         public bool? IsChecked { get; set; }
-        public bool? IsValidName { get => KitName.Length > 21; }
+        public bool? IsValidName { get => KitName.Length < 21; }
 
 
         public WorkDockRow(Array row, int rowIndex)
