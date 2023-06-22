@@ -3,6 +3,7 @@ using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -34,6 +35,7 @@ namespace AppPropertiesFromExcelToDrawings
             Model = new Model();
             CurrentDrawingHandler = new DrawingHandler();
             InitializeComponent();
+
 
         }
 
@@ -133,11 +135,18 @@ namespace AppPropertiesFromExcelToDrawings
                 return;
             }
 
-            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-            using (ExcelPackage package = new ExcelPackage(FilePath))
+            try
             {
-                var sheet = package.Workbook.Worksheets[0];
-                _workDockRows = GetList(sheet);
+                ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+                using (ExcelPackage package = new ExcelPackage(FilePath))
+                {
+                    var sheet = package.Workbook.Worksheets[0];
+                    _workDockRows = GetList(sheet);
+                }
+            }
+            catch(Exception ex) 
+            {
+                MessageBox.Show($"Error: {ex.Message}");
             }
         }
         private List<WorkDockRow> GetList(ExcelWorksheet sheet)
@@ -167,16 +176,23 @@ namespace AppPropertiesFromExcelToDrawings
         }
         private void GetDrawingsFromTekla()
         {
-            DrawingEnumerator drawingsEnum = CurrentDrawingHandler.GetDrawings();
-
-            if (drawingsEnum != null)
+            try
             {
-                Drawings = new List<Drawing>();
+                DrawingEnumerator drawingsEnum = CurrentDrawingHandler.GetDrawings();
 
-                foreach (Drawing Drawing in drawingsEnum)
+                if (drawingsEnum != null)
                 {
-                    Drawings.Add(Drawing);
+                    Drawings = new List<Drawing>();
+
+                    foreach (Drawing Drawing in drawingsEnum)
+                    {
+                        Drawings.Add(Drawing);
+                    }
                 }
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}");
             }
         }
 
@@ -266,7 +282,7 @@ namespace AppPropertiesFromExcelToDrawings
                 ExecuteOperations();
             }
             else
-            {
+            {                
                 MessageBox.Show("Excel файл должен быть закрыт!", "Ошибка!", MessageBoxButton.OK, MessageBoxImage.Error); ExecuteOperations();
             }
         }
