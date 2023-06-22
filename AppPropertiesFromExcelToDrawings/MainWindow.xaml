@@ -8,8 +8,7 @@
         Title="MainWindow" Height="450" Width="800">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="69*"/>
-            <ColumnDefinition Width="331*"/>
+
         </Grid.ColumnDefinitions>
 
         <Button x:Name="openExelButton" 
@@ -17,7 +16,7 @@
                 VerticalAlignment="Center"
                 MinWidth="150"
                 MinHeight="50"
-                Margin="502,0,0,0"
+                Margin="450,0,0,0"
                 Click="openExelButton_Click" Grid.Column="1"
                 >Открыть файл</Button>
 
@@ -37,11 +36,20 @@
                 VerticalAlignment="Center"
                 MinWidth="150"
                 MinHeight="50"
-                Margin="100,0,0,0"
+                Margin="150,0,0,0"
                 Click="updateDrawingsButton_Click" Grid.Column="1"
                 Content="Обновить чертежи"
                 ></Button>
 
+        <Button x:Name="ExecuteOperationsButton" 
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                MinWidth="150"
+                MinHeight="50"
+                Margin="0,0,0,0"
+                Click="ExecuteOperationsButton_Click" Grid.Column="1"
+                Content="Выполнить операции"
+                ></Button>
 
     </Grid>
 </Window>

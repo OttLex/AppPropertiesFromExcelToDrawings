@@ -35,12 +35,14 @@ namespace AppPropertiesFromExcelToDrawings
             CurrentDrawingHandler = new DrawingHandler();
             InitializeComponent();
 
+        }
+
+        private void ExecuteOperations()
+        {
             GetDataFromExcel();
             GetDrawingsFromTekla();
             UpdateDrawings();
         }
-
-
 
         #region На будующее открыть и сохранить файл через диалог.
         public bool OpenFileDialog()
@@ -69,6 +71,31 @@ namespace AppPropertiesFromExcelToDrawings
             return false;
         }
         #endregion
+
+        private bool ValidateExcel()
+        {
+            FilePath = GetFilesNamesInFolder();
+
+            if (FilePath == "")
+            {
+                MessageBox.Show("Ошибка. Файл \"Состав рабочей документации.xlsx\" не найден!");
+                return false;
+            }
+
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+            try
+            {
+                using (ExcelPackage package = new ExcelPackage(FilePath))
+                {                   
+                    package.Save();
+                }
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
+        }
 
 
         private void openExelButton_Click(object sender, RoutedEventArgs e)
@@ -213,8 +240,7 @@ namespace AppPropertiesFromExcelToDrawings
             {
                 var sheet = package.Workbook.Worksheets[0];
 
-                int startRow = 2;
-                int startColumn = 1;
+                int startRow = 3;
 
                 for (int rowIndex = startRow; rowIndex < sheet.Dimension.Rows + 1; rowIndex++)
                 {
@@ -232,5 +258,17 @@ namespace AppPropertiesFromExcelToDrawings
             }
         }
 
+        private void ExecuteOperationsButton_Click(object sender, RoutedEventArgs e)
+        {
+
+            if (ValidateExcel())
+            {
+                ExecuteOperations();
+            }
+            else
+            {
+                MessageBox.Show("Excel файл должен быть закрыт!", "Ошибка!", MessageBoxButton.OK, MessageBoxImage.Error); ExecuteOperations();
+            }
+        }
     }
 }
