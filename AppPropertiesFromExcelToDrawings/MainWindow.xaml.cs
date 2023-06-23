@@ -43,23 +43,8 @@ namespace AppPropertiesFromExcelToDrawings
             CurrentDrawingHandler = new DrawingHandler();
             _stopwatch = new Stopwatch();
             InitializeComponent();
-
-
         }
 
-        private void ExecuteOperations()
-        {
-
-            try
-            {
-                GetDataFromExcel();
-                GetDrawingsFromTekla();
-                UpdateDrawings();
-            }
-            finally
-            { 
-            }
-        }
 
         private bool ValidateExcel()
         {
@@ -87,10 +72,6 @@ namespace AppPropertiesFromExcelToDrawings
         }
 
 
-        private void openExelButton_Click(object sender, RoutedEventArgs e)
-        {
-            GetDataFromExcel();
-        }
         private string GetFilesNamesInFolder()
         {
             DirectoryInfo dir = new DirectoryInfo(_model.GetInfo().ModelPath); //Assuming Test is your Folder
@@ -129,7 +110,7 @@ namespace AppPropertiesFromExcelToDrawings
                 using (ExcelPackage package = new ExcelPackage(FilePath))
                 {
                     var sheet = package.Workbook.Worksheets[0];
-                    _workDockRows = GetList(sheet);
+                    _workDockRows = GetListFromExcel(sheet);
                 }
             }
             catch (Exception ex)
@@ -138,9 +119,9 @@ namespace AppPropertiesFromExcelToDrawings
             }
 
             Debug.WriteLine("Данные из экселя выгружены: " + _stopwatch.Elapsed);
-            UpdateProgressStringUI("Данные из экселя выгружены. Выгрузка чертежей из Tekla...");
+            UpdateProgressStringUI("Данные из экселя выгружены. \n Выгрузка чертежей из Tekla...");
         }
-        private List<WorkDockRow> GetList(ExcelWorksheet sheet)
+        private List<WorkDockRow> GetListFromExcel(ExcelWorksheet sheet)
         {
             int startRow = 3;
             int startColumn = 1;
@@ -188,7 +169,7 @@ namespace AppPropertiesFromExcelToDrawings
             }
 
             Debug.WriteLine("Чертежи выгружены: " + _stopwatch.Elapsed);
-            UpdateProgressStringUI("Чертежи выгружены. Модификация чертежей...");
+            UpdateProgressStringUI("Чертежи выгружены. \n Модификация чертежей...");
         }
 
 
@@ -248,10 +229,11 @@ namespace AppPropertiesFromExcelToDrawings
 
             Debug.WriteLine("Чертежи обновлены: " + _stopwatch.Elapsed);
 
-            UpdateProgressStringUI("Чертежи обновлены. Отметка строк в Excel...");
+            UpdateProgressStringUI("Чертежи обновлены. \n Отметка строк в Excel...");
 
             UpdateExcel();
         }
+
 
         private void UpdateExcel()
         {
@@ -280,7 +262,7 @@ namespace AppPropertiesFromExcelToDrawings
                 package.Save();
                 Debug.WriteLine("Эксель обновлён: " + _stopwatch.Elapsed);
                 _stopwatch.Stop();                
-                UpdateProgressStringUI("Excel обновлён. Выполнение программы завершено. /t Затрачено: "+ _stopwatch.Elapsed);
+                UpdateProgressStringUI("Excel обновлён. \n Выполнение программы завершено. \n Затрачено: " + _stopwatch.Elapsed);
             }
         }
 
@@ -306,27 +288,19 @@ namespace AppPropertiesFromExcelToDrawings
                 return;
 
 
-            await Task.Run(() => 
+            await Task.Run(() =>
             {
-                    if (ValidateExcel())
-                    {
-                        ExecuteOperations();
-                    }
-                    else
-                    {
-                        MessageBox.Show("Excel файл должен быть закрыт!", "Ошибка!", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
+                if (ValidateExcel())
+                {
+                    GetDataFromExcel();
+                    GetDrawingsFromTekla();
+                    UpdateDrawings();
+                }
+                else
+                {
+                    MessageBox.Show("Excel файл должен быть закрыт!", "Ошибка!", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             });
-
-
-            //if (ValidateExcel())
-            //{
-            //    ExecuteOperations();
-            //}
-            //else
-            //{
-            //    MessageBox.Show("Excel файл должен быть закрыт!", "Ошибка!", MessageBoxButton.OK, MessageBoxImage.Error);
-            //}
 
             UpdateUI();
         }
@@ -339,7 +313,11 @@ namespace AppPropertiesFromExcelToDrawings
 
         private void UpdateProgressStringUI(string progress)
         {
-            statusString.Content = progress;            
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                this.statusString.Text = progress;
+            }));
+           
         }
 
         private void UpdateNotValidRowsUI()

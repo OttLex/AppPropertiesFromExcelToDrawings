@@ -81,15 +81,15 @@
             Grid.Row="1"
             ></Label>
 
-        <Label
-            x:Name="statusString"
-            Content="-"
+        <TextBlock x:Name ="statusString"
+            Text="-"
             VerticalAlignment="Top"
-            HorizontalAlignment="Left"
-            Margin="20,25,0,0"
+            HorizontalAlignment="Center"
+            Margin="0,25,0,0"
             Grid.Column="2"
-            Grid.Row="1"
-            ></Label>
+            Grid.Row="1" >
+            
+        </TextBlock>
 
     </Grid>
 </Window>
