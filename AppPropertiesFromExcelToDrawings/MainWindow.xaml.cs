@@ -6,12 +6,14 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media;
 using Tekla.Structures.Drawing;
 using Tekla.Structures.Model;
 using Drawing = Tekla.Structures.Drawing.Drawing;
-
+using Task = System.Threading.Tasks.Task;
 
 namespace AppPropertiesFromExcelToDrawings
 {
@@ -27,9 +29,8 @@ namespace AppPropertiesFromExcelToDrawings
         private string _filePath;
         private Stopwatch _stopwatch;
         List<string> _currentDrawings;
-
-        private List<Exception> _excelException;
-        private List<Exception> _drawingException;
+        List<string> _rowWithIncorrectName;
+        List<string> _drawingsIncorrect;
 
         public string FilePath { get => _filePath; set => _filePath = value; }
         public Model Model { get => _model; set => _model = value; }
@@ -48,38 +49,17 @@ namespace AppPropertiesFromExcelToDrawings
 
         private void ExecuteOperations()
         {
-            GetDataFromExcel();
-            GetDrawingsFromTekla();
-            UpdateDrawings();
-        }
 
-        #region На будующее открыть и сохранить файл через диалог.
-        public bool OpenFileDialog()
-        {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Exel (*.xlsx;)|*.xlsx|All files (*.*)|*.*";
-            openFileDialog.InitialDirectory = Environment.CurrentDirectory;
-            //C:\Users\oav\source\repos\CalculateBridgeService\CalculateBridgeService\template.xlsx
-
-
-            if (openFileDialog.ShowDialog() == true)
+            try
             {
-                FilePath = openFileDialog.FileName;
-                return true;
+                GetDataFromExcel();
+                GetDrawingsFromTekla();
+                UpdateDrawings();
             }
-            return false;
-        }
-        public bool SaveFileDialog()
-        {
-            SaveFileDialog saveFileDialog = new SaveFileDialog();
-            if (saveFileDialog.ShowDialog() == true)
-            {
-                FilePath = saveFileDialog.FileName;
-                return true;
+            finally
+            { 
             }
-            return false;
         }
-        #endregion
 
         private bool ValidateExcel()
         {
@@ -140,7 +120,7 @@ namespace AppPropertiesFromExcelToDrawings
             if (FilePath == "")
             {
                 MessageBox.Show("Ошибка. Файл \"Состав рабочей документации.xlsx\" не найден!");
-                return;
+                throw new Exception();
             }
 
             try
@@ -158,6 +138,7 @@ namespace AppPropertiesFromExcelToDrawings
             }
 
             Debug.WriteLine("Данные из экселя выгружены: " + _stopwatch.Elapsed);
+            UpdateProgressStringUI("Данные из экселя выгружены. Выгрузка чертежей из Tekla...");
         }
         private List<WorkDockRow> GetList(ExcelWorksheet sheet)
         {
@@ -186,6 +167,7 @@ namespace AppPropertiesFromExcelToDrawings
         }
         private void GetDrawingsFromTekla()
         {
+            _drawingsIncorrect = new List<string>();
             try
             {
                 DrawingEnumerator drawingsEnum = CurrentDrawingHandler.GetDrawings();
@@ -206,31 +188,27 @@ namespace AppPropertiesFromExcelToDrawings
             }
 
             Debug.WriteLine("Чертежи выгружены: " + _stopwatch.Elapsed);
+            UpdateProgressStringUI("Чертежи выгружены. Модификация чертежей...");
         }
 
-
-
-        private void updateDrawingsButton_Click(object sender, RoutedEventArgs e)
-        {
-            UpdateDrawings();
-        }
 
         private void UpdateDrawings()
         {
-            _currentDrawings = GetDrawingsContainsExcelRow().Select(d=>d.Title2).ToList();
-            List<Drawing> currentDrawings= GetDrawingsContainsExcelRow();
+            List<Drawing> currentDrawings= GetDrawingsContainsExcelRow(true);
+            _currentDrawings = currentDrawings.Select(d=>d.Title2).ToList();
+
             List<Drawing> updatedDrawings;
             RewriteDrawingsData(currentDrawings, out updatedDrawings);
 
-            UpdateDrawingsTekla(ref updatedDrawings);
+            UpdateDrawingsTekla(updatedDrawings);
         }
 
-        private List<Drawing> GetDrawingsContainsExcelRow()
+        private List<Drawing> GetDrawingsContainsExcelRow(bool isValidName)
         {
 
             var validDataRows = Drawings.Where(d =>
                                                     _workDockRows
-                                                    .Where(w => w.IsValidName == true)
+                                                    .Where(w => w.IsValidName == isValidName)
                                                     .Select(w => w.Id)
                                                     .ToList()
                                                     .Contains(d.Title2)).ToList();
@@ -245,16 +223,23 @@ namespace AppPropertiesFromExcelToDrawings
             {
                 WorkDockRow curRow = _workDockRows.Where(r => r.Id == drawing.Title2).FirstOrDefault();
 
-                drawing.Title1 = curRow.KitCode;
-                drawing.Title2 = curRow.KitName;
-                string dateDeveloped = curRow.Date;
-                drawing.SetUserProperty("DR_ASSIGNED_TO", dateDeveloped);
+                try
+                {
+                    drawing.Title1 = curRow.KitCode;
+                    drawing.Title2 = curRow.KitName;
+                    string dateDeveloped = curRow.Date;
+                    drawing.SetUserProperty("DR_ASSIGNED_TO", dateDeveloped);
+                }
+                catch
+                {
+                    _drawingsIncorrect.Add(drawing.Name+" "+drawing.Title1 + " " + drawing.Title2);
+                }
             }
 
             updatedDrawings = currentDrawings;
         }
 
-        private void UpdateDrawingsTekla(ref List<Drawing> drawings)
+        private void UpdateDrawingsTekla(List<Drawing> drawings)
         {
             foreach (Drawing drawing in drawings)
             {
@@ -262,6 +247,9 @@ namespace AppPropertiesFromExcelToDrawings
             }
 
             Debug.WriteLine("Чертежи обновлены: " + _stopwatch.Elapsed);
+
+            UpdateProgressStringUI("Чертежи обновлены. Отметка строк в Excel...");
+
             UpdateExcel();
         }
 
@@ -291,20 +279,80 @@ namespace AppPropertiesFromExcelToDrawings
 
                 package.Save();
                 Debug.WriteLine("Эксель обновлён: " + _stopwatch.Elapsed);
+                _stopwatch.Stop();                
+                UpdateProgressStringUI("Excel обновлён. Выполнение программы завершено. /t Затрачено: "+ _stopwatch.Elapsed);
             }
         }
 
-        private void ExecuteOperationsButton_Click(object sender, RoutedEventArgs e)
+        private async void ExecuteOperationsButton_Click(object sender, RoutedEventArgs e)
         {
-
-            if (ValidateExcel())
+            Mouse.OverrideCursor = Cursors.Wait;
+            try
             {
-                ExecuteOperations();
+                await ExecuteOperationsAsync();
             }
-            else
+            finally
             {
-                MessageBox.Show("Excel файл должен быть закрыт!", "Ошибка!", MessageBoxButton.OK, MessageBoxImage.Error); ExecuteOperations();
-            }
+                Mouse.OverrideCursor = null;
+            };
         }
+
+        private async Task ExecuteOperationsAsync()
+        {
+            var dialogResult = MessageBox.Show("Excel файл должен быть закрыт. Все чертежи должны быть закрыты. Вы уверены что условия выполнены?",
+                                               "Внимание!", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+            if (dialogResult == MessageBoxResult.No)
+                return;
+
+
+            await Task.Run(() => 
+            {
+                    if (ValidateExcel())
+                    {
+                        ExecuteOperations();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Excel файл должен быть закрыт!", "Ошибка!", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+            });
+
+
+            //if (ValidateExcel())
+            //{
+            //    ExecuteOperations();
+            //}
+            //else
+            //{
+            //    MessageBox.Show("Excel файл должен быть закрыт!", "Ошибка!", MessageBoxButton.OK, MessageBoxImage.Error);
+            //}
+
+            UpdateUI();
+        }
+
+        private void UpdateUI()
+        {
+            UpdateNotValidRowsUI();
+            UpdateErrorDrawingsUI();
+        }
+
+        private void UpdateProgressStringUI(string progress)
+        {
+            statusString.Content = progress;            
+        }
+
+        private void UpdateNotValidRowsUI()
+        {
+            rowsListBox.DataContext = null;
+            rowsListBox.DataContext = _rowWithIncorrectName;
+        }
+
+        private void UpdateErrorDrawingsUI()
+        {
+            drawingsListBox.DataContext = null;
+            drawingsListBox.DataContext = _drawingsIncorrect;
+        }
+
     }
 }

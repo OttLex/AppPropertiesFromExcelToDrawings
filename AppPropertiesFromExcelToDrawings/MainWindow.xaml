@@ -5,51 +5,91 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AppPropertiesFromExcelToDrawings"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Выгрузка из Excel в чертежи" Height="300" Width="400">
     <Grid>
         <Grid.ColumnDefinitions>
-
+            <ColumnDefinition Width="17*"></ColumnDefinition>
+            <ColumnDefinition Width="33*"/>
+            <ColumnDefinition Width="50*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
 
-        <Button x:Name="openExelButton" 
-                HorizontalAlignment="Left"
-                VerticalAlignment="Center"
-                MinWidth="150"
-                MinHeight="50"
-                Margin="450,0,0,0"
-                Click="openExelButton_Click" Grid.Column="1"
-                >Открыть файл</Button>
-
-        <Button x:Name="openDrawingsButton" 
-                HorizontalAlignment="Left"
-                VerticalAlignment="Center"
-                MinWidth="150"
-                MinHeight="50"
-                Margin="300,0,0,0"
-                Click="openDrawingsButton_Click" Grid.Column="1"
-                Content="Открыть чертежи"
-                ></Button>
-
-
-        <Button x:Name="updateDrawingsButton" 
-                HorizontalAlignment="Left"
-                VerticalAlignment="Center"
-                MinWidth="150"
-                MinHeight="50"
-                Margin="150,0,0,0"
-                Click="updateDrawingsButton_Click" Grid.Column="1"
-                Content="Обновить чертежи"
-                ></Button>
+        <Grid.RowDefinitions>
+            <RowDefinition></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
 
         <Button x:Name="ExecuteOperationsButton" 
                 HorizontalAlignment="Left"
-                VerticalAlignment="Center"
-                MinWidth="150"
-                MinHeight="50"
-                Margin="0,0,0,0"
-                Click="ExecuteOperationsButton_Click" Grid.Column="1"
-                Content="Выполнить операции"
+                VerticalAlignment="Top"
+                MinWidth="110"
+                MinHeight="25"
+                Margin="20,30,0,0"
+                Click="ExecuteOperationsButton_Click" 
+                Grid.Column="2"
+                Grid.Row="0"
+                Content="Выполнить операцию"
                 ></Button>
+
+        <Label
+            x:Name="rowsNames"
+            Content="Строки с ошибками:"
+            VerticalAlignment="Top"
+            HorizontalAlignment="Left"
+            Margin="20,5,0,0"
+            Grid.Column="0"
+            Grid.Row="0" Grid.ColumnSpan="2"
+            ></Label>
+
+        <ListBox
+            x:Name="rowsListBox"
+            Grid.Column="0"
+            Grid.Row="0"
+            Margin="10,30,10,0"
+            Background="LightGreen" Grid.ColumnSpan="2"            
+            >
+        </ListBox>
+
+
+
+        <Label
+            x:Name="drawingsNames"
+            Content="Чертежи с ошибками:"
+            VerticalAlignment="Top"
+            HorizontalAlignment="Left"
+            Margin="20,5,0,0"
+            Grid.Column="0"
+            Grid.Row="1" Grid.ColumnSpan="2"
+            ></Label>
+
+        <ListBox
+            x:Name="drawingsListBox"
+            Grid.Column="0"
+            Grid.Row="1"
+            Margin="10,30,10,0"
+            Background="LightCyan" Grid.ColumnSpan="2"            
+            >
+        </ListBox>
+
+
+        <Label
+            x:Name="statusName"
+            Content="Статус:"
+            VerticalAlignment="Top"
+            HorizontalAlignment="Left"
+            Margin="20,5,0,0"
+            Grid.Column="2"
+            Grid.Row="1"
+            ></Label>
+
+        <Label
+            x:Name="statusString"
+            Content="-"
+            VerticalAlignment="Top"
+            HorizontalAlignment="Left"
+            Margin="20,25,0,0"
+            Grid.Column="2"
+            Grid.Row="1"
+            ></Label>
 
     </Grid>
 </Window>
