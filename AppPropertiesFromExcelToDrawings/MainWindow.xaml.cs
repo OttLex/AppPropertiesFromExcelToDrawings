@@ -126,14 +126,21 @@ namespace AppPropertiesFromExcelToDrawings
             int startRow = 3;
             int startColumn = 1;
             List<WorkDockRow> list = new List<WorkDockRow>();
+            _rowWithIncorrectName = new List<string>();
 
             for (int rowIndex = startRow; rowIndex <= sheet.Dimension.Rows + 1; rowIndex++)
             {
                 var row = sheet.Cells[rowIndex, startColumn, rowIndex, sheet.Dimension.Columns].Value as Array;
+                try
+                {
+                    WorkDockRow Row = new WorkDockRow(row, rowIndex);
 
-                WorkDockRow Row = new WorkDockRow(row, rowIndex);
-
-                list.Add(Row);
+                    list.Add(Row);
+                }
+                catch
+                {
+                    _rowWithIncorrectName.Add(rowIndex.ToString());
+                }
 
             }
 
@@ -165,7 +172,7 @@ namespace AppPropertiesFromExcelToDrawings
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}");
+               // MessageBox.Show($"Error: {ex.Message}");
             }
 
             Debug.WriteLine("Чертежи выгружены: " + _stopwatch.Elapsed);
@@ -243,21 +250,28 @@ namespace AppPropertiesFromExcelToDrawings
 
                 int startRow = 3;
 
-                for (int rowIndex = startRow; rowIndex <= sheet.Dimension.Rows + 1; rowIndex++)
-                {
-                    string id = sheet.GetValue(rowIndex, 1).ToString();
-                    WorkDockRow currentRow = _workDockRows.Where(r => r.Id == id 
-                                                                   && r.IsValidName==true).FirstOrDefault();
+                //for (int rowIndex = startRow; rowIndex <= sheet.Dimension.Rows + 1; rowIndex++)
+                //{
+                //    string id = sheet.GetValue(rowIndex, 1).ToString();
+                //    WorkDockRow currentRow = _workDockRows.Where(r => r.Id == id 
+                //                                                   && r.IsValidName==true).FirstOrDefault();
 
-                    if (currentRow != null)
-                    {
-                        if (_currentDrawings.Where(d => d == currentRow.Id).Count() > 0)
-                        {
-                            sheet.Cells[rowIndex, sheet.Dimension.Columns].Clear();
-                            sheet.Cells[rowIndex, sheet.Dimension.Columns].Value = "+";
-                        }
-                    }
+                //    if (currentRow != null)
+                //    {
+                //        if (_currentDrawings.Where(d => d == currentRow.Id).Count() > 0)
+                //        {
+                //            sheet.Cells[rowIndex, sheet.Dimension.Columns].Clear();
+                //            sheet.Cells[rowIndex, sheet.Dimension.Columns].Value = "+";
+                //        }
+                //    }
+                //}
+
+                foreach(var row in _workDockRows)
+                {
+                    sheet.Cells[row.Key, sheet.Dimension.Columns].Clear();
+                    sheet.Cells[row.Key, sheet.Dimension.Columns].Value = "+";
                 }
+
 
                 package.Save();
                 Debug.WriteLine("Эксель обновлён: " + _stopwatch.Elapsed);
@@ -288,7 +302,7 @@ namespace AppPropertiesFromExcelToDrawings
                 return;
 
 
-            await Task.Run(() =>
+            await Task.Factory.StartNew(() =>
             {
                 if (ValidateExcel())
                 {
@@ -322,14 +336,14 @@ namespace AppPropertiesFromExcelToDrawings
 
         private void UpdateNotValidRowsUI()
         {
-            rowsListBox.DataContext = null;
-            rowsListBox.DataContext = _rowWithIncorrectName;
+            rowsListBox.ItemsSource = null;
+            rowsListBox.ItemsSource = _rowWithIncorrectName;
         }
 
         private void UpdateErrorDrawingsUI()
         {
-            drawingsListBox.DataContext = null;
-            drawingsListBox.DataContext = _drawingsIncorrect;
+            drawingsListBox.ItemsSource = null;
+            drawingsListBox.ItemsSource = _drawingsIncorrect;
         }
 
     }

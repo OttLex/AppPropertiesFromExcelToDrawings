@@ -8,7 +8,7 @@ namespace AppPropertiesFromExcelToDrawings
 {
     public class WorkDockRow
     {
-        public int? Key { get; private set; }
+        public int Key { get; private set; }
         public string Id { get; private set; }
         public string KitCode { get; private set; }
         public string KitName { get; private set; } = "";
